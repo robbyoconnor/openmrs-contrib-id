@@ -116,7 +116,7 @@ email: {
 
 // EJS Plugs
 defaultSidebar: ["sidebar/needhelp"],
-aboutHTML: "<a href=\"/\">OpenMRS ID Dashboard</a>, v1.2",
+aboutHTML: "<a href=\"/\">OpenMRS ID Dashboard</a>, v1.3.0",
 
 
 // User navigation bar links

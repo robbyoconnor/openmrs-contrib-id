@@ -351,6 +351,7 @@ app.get('/resource/*', function(req, res, next){
 });
 
 // Legacy Redirects
+app.get('/edit', function(req, res){res.redirect('/profile')});
 app.get('/edit/profile?', function(req, res){res.redirect('/profile')});
 app.get('/edit/password', function(req, res){res.redirect('/password')});
 
