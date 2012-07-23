@@ -18,3 +18,7 @@ app/conf.js
 ehthumbs.db
 Icon?
 Thumbs.db
+
+# Test files #
+##############
+app/ldap-test.js
