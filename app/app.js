@@ -134,7 +134,7 @@ app.get('/signup', mid.forceLogout, function(req, res, next){
 	});
 });
 
-app.post('/signup', mid.forceLogout, mid.forceCaptcha, validate(), function(req, res, next){
+app.post('/signup', mid.logSignup, mid.forceLogout, mid.forceCaptcha, validate(), function(req, res, next){
 	var id = req.body.username, first = req.body.firstname, last = req.body.lastname,
 		email = req.body.email, pass = req.body.password, captcha = req.body.recaptcha_response_field;
 		
