@@ -1,4 +1,5 @@
 'use strict';
+
 /**
  * This is the router for /profile. It displays a users profile,
  * and hanldes its editing.
@@ -17,12 +18,9 @@ const mid = require('../../express-middleware');
 const User = require('../../models/user');
 const utils = require('../../utils');
 
-exports = module.exports = app => {
-
-
+exports = module.exports = (app) => {
   app.get('/profile', mid.forceLogin,
     (req, res, next) => {
-
       // check if any emails being verified
 
       const user = req.session.user;
@@ -31,9 +29,9 @@ exports = module.exports = app => {
       const allEmails = [];
 
       // verified emails
-      _.forEach(user.emailList, email => {
+      _.forEach(user.emailList, (email) => {
         const item = {
-          email: email
+          email,
         };
         if (email === user.primaryEmail) {
           item.primary = true;
@@ -42,13 +40,13 @@ exports = module.exports = app => {
       });
 
       // unverified emails
-      const findNewEmail = callback => {
+      const findNewEmail = (callback) => {
         const category = 'new email';
         verification.search(username, category, callback);
       };
 
       const addToList = (insts, callback) => {
-        _.forEach(insts, inst => {
+        _.forEach(insts, (inst) => {
           const item = {
             email: inst.addr,
             id: utils.urlEncode64(inst.uuid),
@@ -60,15 +58,15 @@ exports = module.exports = app => {
       };
 
       async.waterfall([
-          findNewEmail,
-          addToList,
-        ],
-        err => {
+        findNewEmail,
+        addToList,
+      ],
+        (err) => {
           if (err) {
             return next(err);
           }
           res.render('views/profile/index', {
-            emails: allEmails
+            emails: allEmails,
           });
         });
     });
@@ -76,10 +74,9 @@ exports = module.exports = app => {
   // handle basical profile change, firstName and lastName only currently
   app.post('/profile', mid.forceLogin,
     (req, res, next) => {
-
       const username = req.session.user.username;
 
-      const validation = callback => {
+      const validation = (callback) => {
         validate.perform({
           firstName: validate.chkEmpty.bind(null, req.body.firstName),
           lastName: validate.chkEmpty.bind(null, req.body.lastName),
@@ -89,12 +86,12 @@ exports = module.exports = app => {
             return callback();
           }
           return res.json({
-            fail: validateError
+            fail: validateError,
           });
         });
       };
 
-      const findUser = callback => {
+      const findUser = (callback) => {
         User.findByUsername(username, callback);
       };
 
@@ -106,10 +103,10 @@ exports = module.exports = app => {
       };
 
       async.waterfall([
-          validation,
-          findUser,
-          updateUser,
-        ],
+        validation,
+        findUser,
+        updateUser,
+      ],
         (err, user) => {
           if (err) {
             return next(err);
@@ -127,7 +124,7 @@ exports = module.exports = app => {
       return;
     }
     const username = req.session.user.username;
-    const findUser = callback => {
+    const findUser = (callback) => {
       User.findByUsername(username, callback);
     };
     const updateUser = (user, callback) => {
@@ -148,11 +145,8 @@ exports = module.exports = app => {
       }
       req.session.user = user;
       return res.json({
-        success: true
+        success: true,
       });
     });
   });
-
-
-
 };

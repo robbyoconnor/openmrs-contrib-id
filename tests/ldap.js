@@ -1,5 +1,6 @@
 'use strict';
-/*jshint expr: true*/
+
+/* jshint expr: true*/
 const _ = require('lodash');
 const expect = require('chai').expect;
 const async = require('async');
@@ -19,10 +20,10 @@ const systemDN = `${serverAttr.rdn}=${serverAttr.loginUser},${serverAttr.baseDn}
 const bindCredentials = serverAttr.password;
 
 const client = ldapjs.createClient({
-  url: url,
+  url,
   maxConnections: 10,
   bindDN: systemDN,
-  bindCredentials: bindCredentials,
+  bindCredentials,
 });
 
 const USERNAME = 'uniqueuniquelonglong';
@@ -31,7 +32,7 @@ const EMAIL = 'foo@bar.com';
 const NAME = 'name';
 
 const INVALID_USERNAME = 'Ply_py'; // contain one underscore
-const INVALID_EMAIL = "bad@bad";
+const INVALID_EMAIL = 'bad@bad';
 
 const VALID_USER = {
   username: USERNAME,
@@ -58,14 +59,13 @@ describe('ldap', () => {
   // First test the getUser independently,
   // as it will be used constantly later
   describe('#getUser()', () => {
-
-    before(done => {
+    before((done) => {
       client.add(DN, USER_ENTRY, done);
     });
-    after(done => {
+    after((done) => {
       client.del(DN, done);
     });
-    it('should get the user correctly', done => {
+    it('should get the user correctly', (done) => {
       ldap.getUser(USERNAME, (err, user) => {
         expect(err).to.not.exist;
         expect(user).to.exist;
@@ -82,7 +82,7 @@ describe('ldap', () => {
       });
     });
 
-    it('should report an error when the username is invalid', done => {
+    it('should report an error when the username is invalid', (done) => {
       ldap.getUser(INVALID_USERNAME, (err, user) => {
         expect(err).to.exist;
         expect(err.message).to.equal('Illegal username specified');
@@ -90,7 +90,7 @@ describe('ldap', () => {
       });
     });
 
-    it('should return nothing when the user doesn\'t exist', done => {
+    it('should return nothing when the user doesn\'t exist', (done) => {
       ldap.getUser('fourohfour', (err, user) => {
         expect(err).to.not.exist;
         expect(user).to.not.exist;
@@ -103,24 +103,24 @@ describe('ldap', () => {
     const username = USER_ENTRY[userAttr.username];
     const pass = USER_ENTRY[userAttr.password];
 
-    before(done => {
+    before((done) => {
       client.add(DN, USER_ENTRY, done);
     });
 
-    after(done => {
+    after((done) => {
       client.del(DN, done);
     });
 
-    it('should return an error when the password is wrong', done => {
-      ldap.authenticate(username, 'nonsense', err => {
+    it('should return an error when the password is wrong', (done) => {
+      ldap.authenticate(username, 'nonsense', (err) => {
         expect(err).to.exist;
         expect(err.message).to.equal('Invalid Credentials');
         return done();
       });
     });
 
-    it('should correctly authenticate the user', done => {
-      ldap.authenticate(username, pass, err => {
+    it('should correctly authenticate the user', (done) => {
+      ldap.authenticate(username, pass, (err) => {
         expect(err).to.not.exist;
         return done();
       });
@@ -128,23 +128,23 @@ describe('ldap', () => {
   });
 
   describe('#deleteUser', () => {
-    beforeEach(done => {
+    beforeEach((done) => {
       client.add(DN, USER_ENTRY, done);
     });
 
-    afterEach(done => {
+    afterEach((done) => {
       client.del(DN, err => // clean the entry, in case it fails
         // ignore possible 'no such entry' error
         done());
     });
 
-    it('should remove the user from LDAP', done => {
+    it('should remove the user from LDAP', (done) => {
       const username = USER_ENTRY[userAttr.username];
       async.series([
-        next => {
+        (next) => {
           ldap.deleteUser(username, next);
         },
-        next => {
+        (next) => {
           ldap.getUser(username, (err, user) => {
             expect(err).to.not.exist;
             expect(user).to.not.exist;
@@ -156,11 +156,11 @@ describe('ldap', () => {
   });
 
   describe('#addUser', () => {
-    afterEach(done => {
+    afterEach((done) => {
       ldap.deleteUser(VALID_USER.username, err => done());
     });
 
-    it('should add the user correctly', done => {
+    it('should add the user correctly', (done) => {
       async.waterfall([
         ldap.addUser.bind(null, VALID_USER),
         (usera, next) => {
@@ -185,11 +185,11 @@ describe('ldap', () => {
             expect(dif).to.be.empty;
             return done();
           });
-        }
+        },
       ], done);
     });
 
-    it('should report an error when the username is invalid', done => {
+    it('should report an error when the username is invalid', (done) => {
       const tmp = _.cloneDeep(VALID_USER);
       tmp.username = INVALID_USERNAME;
       ldap.addUser(tmp, (err, user) => {
@@ -199,7 +199,7 @@ describe('ldap', () => {
       });
     });
 
-    it('should report an error when the email is invalid', done => {
+    it('should report an error when the email is invalid', (done) => {
       const tmp = _.cloneDeep(VALID_USER);
       tmp.primaryEmail = INVALID_EMAIL;
       ldap.addUser(tmp, (err, user) => {
@@ -211,14 +211,14 @@ describe('ldap', () => {
   });
 
   describe('#updateUser', () => {
-    beforeEach(done => {
+    beforeEach((done) => {
       ldap.addUser(VALID_USER, done);
     });
-    afterEach(done => {
+    afterEach((done) => {
       ldap.deleteUser(VALID_USER.username, done);
     });
 
-    it('should correctly update the normal user attributes', done => {
+    it('should correctly update the normal user attributes', (done) => {
       const tmp = _.cloneDeep(VALID_USER);
       tmp.firstName = 'Legolas';
       tmp.lastName = 'Greenleaf';
@@ -244,23 +244,23 @@ describe('ldap', () => {
       ], done);
     });
 
-    it('should correctly update the membership', done => {
+    it('should correctly update the membership', (done) => {
       const tmp = _.cloneDeep(VALID_USER);
       tmp.groups = [];
       async.series([
         ldap.updateUser.bind(null, tmp), // delete all
-        next => {
+        (next) => {
           ldap.getUser(tmp.username, (err, user) => {
             expect(err).to.not.exist;
             expect(user.groups).to.be.empty;
             return next();
           });
         },
-        next => {
+        (next) => {
           tmp.groups = userAttr.defaultGroups; // add all
           ldap.updateUser(tmp, next);
         },
-        next => {
+        (next) => {
           ldap.getUser(tmp.username, (err, user) => {
             expect(err).to.not.exist;
             expect(user).to.exist;
@@ -277,23 +277,23 @@ describe('ldap', () => {
 
   describe('#resetPassword', () => {
     const newPass = 'new-password';
-    before(done => {
+    before((done) => {
       ldap.addUser(VALID_USER, done);
     });
-    after(done => {
+    after((done) => {
       ldap.deleteUser(VALID_USER.username, done);
     });
 
-    it('should report an error when the username is invalid', done => {
-      ldap.resetPassword(INVALID_USERNAME, newPass, err => {
+    it('should report an error when the username is invalid', (done) => {
+      ldap.resetPassword(INVALID_USERNAME, newPass, (err) => {
         expect(err).to.exist;
         expect(err.message).to.equal('Illegal username specified');
         return done();
       });
     });
 
-    it('should correctly change the password', done => {
-      ldap.resetPassword(VALID_USER.username, newPass, err => {
+    it('should correctly change the password', (done) => {
+      ldap.resetPassword(VALID_USER.username, newPass, (err) => {
         expect(err).to.not.exist;
         ldap.authenticate(VALID_USER.username, newPass, done);
       });
@@ -301,28 +301,28 @@ describe('ldap', () => {
   });
 
   describe('#lockoutUser', () => {
-    before(done => {
+    before((done) => {
       ldap.addUser(VALID_USER, done);
     });
-    after(done => {
+    after((done) => {
       ldap.deleteUser(VALID_USER.username, done);
     });
 
-    it('should lock the user', done => {
+    it('should lock the user', (done) => {
       const base = userAttr.baseDn;
       const options = {
         scope: 'sub',
         filter: `(${userAttr.rdn}=${VALID_USER.username})`,
-        attributes: ['pwdAccountLockedTime', ],
+        attributes: ['pwdAccountLockedTime'],
       };
-      ldap.lockoutUser(VALID_USER.username, err => {
+      ldap.lockoutUser(VALID_USER.username, (err) => {
         client.search(base, options, (err, res) => {
           expect(err).to.not.exist;
           let obj = {};
-          res.on('searchEntry', entry => {
+          res.on('searchEntry', (entry) => {
             obj = entry.object;
           });
-          res.on('end', result => {
+          res.on('end', (result) => {
             expect(obj.pwdAccountLockedTime).to.exist;
             return done();
           });
@@ -332,33 +332,33 @@ describe('ldap', () => {
   });
 
   describe('#enableUser', () => {
-    before(done => {
-      ldap.addUser(VALID_USER, err => {
+    before((done) => {
+      ldap.addUser(VALID_USER, (err) => {
         if (err) {
           return done(err);
         }
         ldap.lockoutUser(VALID_USER.username, done);
       });
     });
-    after(done => {
+    after((done) => {
       ldap.deleteUser(VALID_USER.username, done);
     });
-    it('should unlock the user', done => {
+    it('should unlock the user', (done) => {
       const base = userAttr.baseDn;
       const options = {
         scope: 'sub',
         filter: `(${userAttr.rdn}=${VALID_USER.username})`,
-        attributes: ['pwdAccountLockedTime', ],
+        attributes: ['pwdAccountLockedTime'],
       };
-      ldap.enableUser(VALID_USER.username, err => {
+      ldap.enableUser(VALID_USER.username, (err) => {
         expect(err).to.not.exist;
         client.search(base, options, (err, res) => {
           expect(err).to.not.exist;
           let obj = {};
-          res.on('searchEntry', entry => {
+          res.on('searchEntry', (entry) => {
             obj = entry.object;
           });
-          res.on('end', result => {
+          res.on('end', (result) => {
             expect(obj.pwdAccountLockedTime).to.not.exist;
             return done();
           });
@@ -368,19 +368,18 @@ describe('ldap', () => {
   });
 
   describe('#usersList', () => {
-    before(done => {
-      ldap.addUser(VALID_USER, err => {
+    before((done) => {
+      ldap.addUser(VALID_USER, (err) => {
         if (err) {
           return done(err);
-        } else {
-          return done();
         }
-      })
+        return done();
+      });
     });
-    after(done => {
+    after((done) => {
       ldap.deleteUser(VALID_USER.username, done);
     });
-    it('should return a list of users', done => {
+    it('should return a list of users', (done) => {
       ldap.getAllUsers((err, users) => {
         expect(err).to.not.exist;
         expect(users).to.exist;

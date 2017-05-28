@@ -1,4 +1,5 @@
 'use strict';
+
 const gulp = require('gulp');
 const concat = require('gulp-concat');
 const uglify = require('gulp-uglify');
@@ -17,15 +18,15 @@ gulp.task('scripts', () => {
   fs.closeSync(fd);
 
   return gulp.src([
-      'resource/scripts/consts.js',
-      'resource/scripts/jquery-addon.js',
-      'resource/scripts/form.js',
-      'resource/scripts/signup.js',
-      'resource/scripts/profile.js',
-      'resource/scripts/reset-public.js',
-      'resource/scripts/reset-private.js',
-      'bower_components/cryptojslib/rollups/sha512.js'
-    ])
+    'resource/scripts/consts.js',
+    'resource/scripts/jquery-addon.js',
+    'resource/scripts/form.js',
+    'resource/scripts/signup.js',
+    'resource/scripts/profile.js',
+    'resource/scripts/reset-public.js',
+    'resource/scripts/reset-private.js',
+    'bower_components/cryptojslib/rollups/sha512.js',
+  ])
     .pipe(concat('min.js'))
     .pipe(uglify())
     .pipe(gulp.dest('resource/scripts/'));

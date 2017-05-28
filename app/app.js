@@ -1,4 +1,5 @@
 'use strict';
+
 /**
  * The contents of this file are subject to the OpenMRS Public License
  * Version 1.1 (the "License"); you may not use this file except in
@@ -52,7 +53,7 @@ app.set('basepath', siteURLParsed.pathname);
 app.set('port', 3000);
 app.use(flash());
 app.use(bodyParser.urlencoded({
-  extended: false
+  extended: false,
 }));
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -61,7 +62,7 @@ app.use(cookieParser());
 // store express session in MongoDB
 const sessionStore = new MongoStore({
   url: conf.mongo.uri,
-  "auto_reconnect": true,
+  auto_reconnect: true,
 });
 const session = expressSession({
   store: sessionStore,
@@ -84,8 +85,8 @@ const sessionHandler = (req, res, next) => {
 app.use(sessionHandler);
 app.use(mid.openmrsHelper);
 
-//development
-if ('development' === app.get('env')) {
+// development
+if (app.get('env') === 'development') {
   log.info('Running in development mode');
 
   app.use(errorHandler());
@@ -101,22 +102,18 @@ if ('development' === app.get('env')) {
 
   app.use('/resource', lessMiddleware('/less', {
     dest: '/stylesheets',
-    pathRoot: path.join(__dirname, '/../resource/')
+    pathRoot: path.join(__dirname, '/../resource/'),
   }));
-
-
 }
 
-if ('production' === app.get('env')) {
+if (app.get('env') === 'production') {
   log.info('Running in production mode');
   app.use(errorHandler());
   app.use('/resource', lessMiddleware('/less', {
     dest: '/stylesheets',
     pathRoot: path.join(__dirname, '/../resource/'),
-    once: true
+    once: true,
   }));
-
-
 }
 
 app.use('/resource', express.static(path.join(__dirname, '/../resource/')));
@@ -126,10 +123,9 @@ app.use('/bower_components', express.static(path.join(__dirname,
 
 require('./render-helpers');
 
-/// DEBUG
+// / DEBUG
 
 if (process.env.NODE_ENV === 'development') {
-
   app.get('/debug/view/:viewName', (req, res) => {
     res.render(`views/${req.params.viewName}`);
   });
@@ -141,7 +137,7 @@ if (process.env.NODE_ENV === 'development') {
   // });
 }
 
-/// DEBUG
+// / DEBUG
 
 // fail if no configuration file found
 try {
@@ -161,7 +157,7 @@ try {
 require('./routes')(app);
 
 /* Load Modules */
-conf.userModules.forEach(module => {
+conf.userModules.forEach((module) => {
   require(`./user-modules/${module}`)(app);
 });
 
@@ -173,7 +169,7 @@ app.use(require('./routes/404'));
 app.use(require('./routes/error'));
 
 
-process.on('uncaughtException', err => {
+process.on('uncaughtException', (err) => {
   log.error(err);
 });
 

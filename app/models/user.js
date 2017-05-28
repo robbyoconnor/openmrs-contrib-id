@@ -1,4 +1,5 @@
 'use strict';
+
 /**
  * This file defines the Schema of OpenMRS-ID
  */
@@ -19,14 +20,14 @@ const Group = require('./group');
 // Ensure the email list is not empty and no duplicate
 // Because mongo won't ensure all the members to be unique in one array
 const nonEmpty = {
-  validator: function(ar) {
+  validator(ar) {
     return ar.length > 0;
   },
-  msg: 'The array can\'t be empty'
+  msg: 'The array can\'t be empty',
 };
 
 const chkArrayDuplicate = {
-  validator: function(arr) {
+  validator(arr) {
     const sorted = arr.slice();
     sorted.sort();
 
@@ -38,7 +39,7 @@ const chkArrayDuplicate = {
     }
     return true;
   },
-  msg: 'Some items are duplicate'
+  msg: 'Some items are duplicate',
 };
 
 function arrToLowerCase(arr) {
@@ -112,7 +113,7 @@ const userSchema = new Schema({
   },
 
   extra: {
-    type: Schema.Types.Mixed
+    type: Schema.Types.Mixed,
   },
 
   inLDAP: { // flag used to mark whether this record is stored in LDAP yet
@@ -129,22 +130,22 @@ const userSchema = new Schema({
 });
 
 // diable autoIndex in production
-if ('production' === process.env.NODE_ENV) {
+if (process.env.NODE_ENV === 'production') {
   userSchema.set('autoIndex', false);
 }
 
 // ensure primaryEmail be one of emailList
-userSchema.path('primaryEmail').validate(function(email) {
-  return -1 !== this.emailList.indexOf(email);
+userSchema.path('primaryEmail').validate(function (email) {
+  return this.emailList.indexOf(email) !== -1;
 }, 'The primaryEmail should be one member of emailList');
 
 // generate an iterative function over a group with a callback function that
 // takes 1 err argument
 const createIteratorOverGroups = (groups, operation) => {
   const updateGroup = (groupName, cb) => {
-    //efficiently update groups
+    // efficiently update groups
     Group.findOneAndUpdate({
-      groupName: groupName
+      groupName,
     }, operation, {
       lean: true,
       select: 'groupName',
@@ -159,21 +160,21 @@ const createIteratorOverGroups = (groups, operation) => {
     });
   };
 
-  return callback => {
+  return (callback) => {
     async.each(groups, updateGroup, callback);
   };
 };
 
 // maintain the groups relations
-userSchema.pre('save', function(next) {
+userSchema.pre('save', function (next) {
   const user = this;
   const userRef = {
     objId: user.id,
-    username: user.username
+    username: user.username,
   };
 
   // get the added and removed array
-  const prepare = callback => {
+  const prepare = (callback) => {
     User.findById(user._id, (err, oldUser) => {
       if (err) {
         return callback(err);
@@ -185,14 +186,13 @@ userSchema.pre('save', function(next) {
   };
 
 
-
   let addGroups = (added, removed, callback) => {
     const worker = createIteratorOverGroups(added, {
       $addToSet: {
         member: userRef,
-      }
+      },
     });
-    return worker(err => {
+    return worker((err) => {
       callback(err, removed);
     });
   };
@@ -201,7 +201,7 @@ userSchema.pre('save', function(next) {
     const worker = createIteratorOverGroups(removed, {
       $pop: {
         member: userRef,
-      }
+      },
     });
     return worker(callback);
   };
@@ -212,7 +212,7 @@ userSchema.pre('save', function(next) {
     addGroups = createIteratorOverGroups(added, {
       $addToSet: {
         member: userRef,
-      }
+      },
     });
     return addGroups(next);
   }
@@ -225,11 +225,11 @@ userSchema.pre('save', function(next) {
 });
 
 // sync with LDAP
-userSchema.pre('save', function(next) {
+userSchema.pre('save', function (next) {
   // aliases
   const uid = this.username;
   const that = this;
-  if (!_.isEmpty(this.password) && 0 !== this.password.indexOf('{SSHA}')) {
+  if (!_.isEmpty(this.password) && this.password.indexOf('{SSHA}') !== 0) {
     this.password = utils.getSSHA(this.password);
   }
   if (this.locked) {
@@ -239,7 +239,7 @@ userSchema.pre('save', function(next) {
     return next();
   }
   if (!this.inLDAP) { // not stored in LDAP yet
-    ldap.addUser(that, err => {
+    ldap.addUser(that, (err) => {
       if (err) {
         log.error(`${uid} failed to add record to OpenLDAP`);
         return next(err);
@@ -251,7 +251,7 @@ userSchema.pre('save', function(next) {
     return;
   }
   // already stored in LDAP, modify it
-  const getUser = callback => {
+  const getUser = (callback) => {
     ldap.getUser(uid, (err, userobj) => {
       if (err) {
         return callback(err);
@@ -273,11 +273,11 @@ userSchema.pre('save', function(next) {
   };
 
   async.waterfall([
-      getUser,
-      updateUser,
-      changePassword,
-    ],
-    err => {
+    getUser,
+    updateUser,
+    changePassword,
+  ],
+    (err) => {
       if (err) {
         log.error(`${uid} failed to sync with OpenLDAP`);
         return next(err);
@@ -287,7 +287,7 @@ userSchema.pre('save', function(next) {
 });
 
 // Hook used to remove the record from LDAP
-userSchema.pre('remove', function(next) {
+userSchema.pre('remove', function (next) {
   if (!this.inLDAP) {
     return next();
   }
@@ -295,30 +295,30 @@ userSchema.pre('remove', function(next) {
 });
 
 // Hook used to remove user from groups
-userSchema.pre('remove', function(next) {
+userSchema.pre('remove', function (next) {
   const user = this;
   const userRef = {
     objId: user.id,
-    username: user.username
+    username: user.username,
   };
   const delGroups = createIteratorOverGroups(user.groups, {
     $pop: {
       member: userRef,
-    }
+    },
   });
   delGroups(next);
 });
 
 // When rendering JSON, omit sensitive attributes from the model
 userSchema.options.toJSON = {
-  transform: function(doc, ret, options) {
+  transform(doc, ret, options) {
     delete ret.password;
     delete ret.locked;
     delete ret.inLDAP;
     delete ret.skipLDAP;
     delete ret.createdAt;
     delete ret.__v;
-  }
+  },
 };
 
 var User = mongoose.model('User', userSchema);
@@ -330,8 +330,7 @@ exports = module.exports = User;
  * and sync it in Mongo*
  */
 const findAndSync = (filter, callback) => {
-
-  const findMongo = cb => {
+  const findMongo = (cb) => {
     User.findOne(filter, (err, user) => {
       if (err) {
         return cb(err);
@@ -344,7 +343,7 @@ const findAndSync = (filter, callback) => {
   };
 
   // not found in mongo, have a try in OpenLDAP
-  const findLDAP = cb => {
+  const findLDAP = (cb) => {
     let finder;
     let condition;
     if (filter.username) { // choose finder
@@ -384,10 +383,10 @@ const findAndSync = (filter, callback) => {
   };
 
   async.waterfall([
-      findMongo,
-      findLDAP,
-      syncMongo,
-    ],
+    findMongo,
+    findLDAP,
+    syncMongo,
+  ],
     (err, user) => {
       if (err) {
         return callback(err);
@@ -408,7 +407,7 @@ const findAndSync = (filter, callback) => {
 User.findByUsername = (username, callback) => {
   username = username.toLowerCase();
   findAndSync({
-    username: username
+    username,
   }, callback);
 };
 
@@ -418,7 +417,7 @@ User.findByUsername = (username, callback) => {
 User.findByEmail = (email, callback) => {
   email = email.toLowerCase();
   findAndSync({
-    emailList: email
+    emailList: email,
   }, callback); // actually there won't be sync
 };
 
@@ -439,7 +438,7 @@ User.findByFilter = (filter, callback) => {
  * @param {[String]}   groups  groupNames
  * @param {Function} callback  same as the one of <code>Model#save</code>
  */
-User.prototype.addGroupsAndSave = function(groups, callback) {
+User.prototype.addGroupsAndSave = function (groups, callback) {
   // ToDo May have duplicate problems
   if (!Array.isArray(groups)) {
     groups = [groups];
@@ -447,30 +446,30 @@ User.prototype.addGroupsAndSave = function(groups, callback) {
   const user = this;
   const userRef = {
     objId: user.id,
-    username: user.username
+    username: user.username,
   };
-  async.each(groups, function addToGroup(groupName, cb) {
+  async.each(groups, (groupName, cb) => {
       // efficiently update groups
-      Group.findOneAndUpdate({
-        groupName: groupName
-      }, {
-        $addToSet: {
-          member: userRef,
-        }
-      }, {
-        lean: true,
-        select: 'groupName',
-      }, (err, group) => {
-        if (err) {
-          return cb(err);
-        }
-        if (_.isEmpty(group)) {
-          return cb(new Error('No such groups'));
-        }
-        return cb();
-      });
-    },
-    err => {
+    Group.findOneAndUpdate({
+      groupName,
+    }, {
+      $addToSet: {
+        member: userRef,
+      },
+    }, {
+      lean: true,
+      select: 'groupName',
+    }, (err, group) => {
+      if (err) {
+        return cb(err);
+      }
+      if (_.isEmpty(group)) {
+        return cb(new Error('No such groups'));
+      }
+      return cb();
+    });
+  },
+    (err) => {
       if (err) {
         return callback(err);
       }

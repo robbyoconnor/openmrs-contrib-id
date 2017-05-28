@@ -1,4 +1,5 @@
 'use strict';
+
 const async = require('async');
 const _ = require('lodash');
 
@@ -19,9 +20,9 @@ if (_.isUndefined(data) || _.isUndefined(userList) || _.isUndefined(groupName)) 
 }
 
 // data-validation
-const checkGroup = callback => {
+const checkGroup = (callback) => {
   Group.findOne({
-    groupName: groupName
+    groupName,
   }, (err, group) => {
     if (err) {
       console.error('screwed');
@@ -37,11 +38,11 @@ const checkGroup = callback => {
   });
 };
 
-const work = callback => {
+const work = (callback) => {
   async.mapSeries(userList, (username, cb) => {
     console.log('Adding user ', username);
     User.findOne({
-      username: username
+      username,
     }, (err, user) => {
       if (err) {
         console.error('screwed');
@@ -59,7 +60,7 @@ const work = callback => {
 
 async.series([
   checkGroup,
-  work
-], err => {
+  work,
+], (err) => {
   process.exit();
 });

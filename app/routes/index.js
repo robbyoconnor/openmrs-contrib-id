@@ -1,5 +1,6 @@
 'use strict';
-exports = module.exports = app => {
+
+exports = module.exports = (app) => {
   // homepage
   app.get('/', require('./main'));
 

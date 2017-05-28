@@ -1,12 +1,11 @@
 'use strict';
+
 /**
  * This is the logout logic for Dashboard
  */
 const log = require('log4js').addLogger('express');
 
-exports = module.exports = app => {
-
-
+exports = module.exports = (app) => {
   app.get('/logout', (req, res) => res.redirect('/disconnect'));
 
   app.get('/disconnect', (req, res, next) => {
@@ -22,6 +21,4 @@ exports = module.exports = app => {
       res.redirect('/');
     }
   });
-
-
 };

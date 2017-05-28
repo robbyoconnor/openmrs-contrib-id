@@ -1,4 +1,5 @@
 'use strict';
+
 const log = require('log4js').addLogger('render-helpers');
 const app = require('./app');
 const conf = require('./conf');
@@ -9,15 +10,15 @@ app.locals.defaultSidebar = conf.defaultSidebar;
 app.locals.aboutHTML = conf.aboutHTML;
 app.siteURL = conf.site.url;
 
-//flash
-app.use(function flash(req, res, next) {
+// flash
+app.use((req, res, next) => {
   // Makes it easier to display flash messages,
   // which are created via req.flash() and erased each page render
   res.locals.flash = req.session ? req.flash() : null;
   return next();
 });
 
-//navLinks
+// navLinks
 const navLinks = (req, res, next) => {
   // Uses login state and privileges to generate the links to
   // include in the user navigation bar
@@ -36,7 +37,7 @@ const navLinks = (req, res, next) => {
   }
 
   // Build list of links to display
-  list.forEach(link => {
+  list.forEach((link) => {
     // determine if session has access to page
 
     // not logged in
@@ -58,7 +59,6 @@ const navLinks = (req, res, next) => {
 
     if (link.visibleLoggedIn) {
       links.push(link);
-      return;
     }
   });
 

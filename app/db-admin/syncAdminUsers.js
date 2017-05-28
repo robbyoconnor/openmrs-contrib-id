@@ -1,4 +1,5 @@
 'use strict';
+
 const async = require('async');
 const q = require('q');
 const log = require('log4js').addLogger('db-admin');
@@ -20,14 +21,12 @@ let User;
  * @return {Promise}           Promise resolved after Formage user is saved
  */
 function syncFormageUser(user, callback) {
-
   return FormageUser.findOne({
-      username: user.username
-    }).exec()
+    username: user.username,
+  }).exec()
     .then(formageUser => (formageUser) ? updatePassword(formageUser, user) :
       createFormageUser(user))
-    .then(formageUser => {
-
+    .then((formageUser) => {
       const deferred = q.defer();
 
       if (formageUser.isModified()) {
@@ -38,24 +37,18 @@ function syncFormageUser(user, callback) {
             deferred.resolve(fu);
           }
         });
-
-      } else {
-        deferred.resolve(formageUser);
       }
+      deferred.resolve(formageUser);
+
 
       return deferred.promise;
-
     })
-    .then(formageUser => {
-
+    .then((formageUser) => {
       log.debug(`formage user ${formageUser.username} saved`);
 
       return (callback) ? callback(null, formageUser) : formageUser;
-
-    }, err => {
-
+    }, (err) => {
       callback(err);
-
     });
 }
 
@@ -66,17 +59,15 @@ function syncFormageUser(user, callback) {
  * @return {FormageUser}       Formage user document
  */
 function createFormageUser(user) {
-
   const fu = new FormageUser({
     username: user.username,
     passwordHash: user.password,
-    is_superuser: true
+    is_superuser: true,
   });
 
   updatePassword(fu, user);
 
   return fu;
-
 }
 
 /**
@@ -96,11 +87,9 @@ function updatePassword(fu, user) {
  * @return {undefined}
  */
 function onSave(user) {
-
   if (_.includes(user.groups, 'dashboard-administrators')) {
     syncFormageUser(user);
   }
-
 }
 
 /**
@@ -123,7 +112,6 @@ function onError(err) {
  *                                       synced
  */
 module.exports = function init(_FormageUser_, _User_) {
-
   FormageUser = _FormageUser_;
   User = _User_;
 
@@ -132,14 +120,12 @@ module.exports = function init(_FormageUser_, _User_) {
   const deferred = q.defer();
 
   User.find({
-      groups: 'dashboard-administrators'
-    }).exec()
-    .then(users => {
-
+    groups: 'dashboard-administrators',
+  }).exec()
+    .then((users) => {
       log.debug(`found ${users.length} dashboard administrator(s)`);
 
-      async.each(users, syncFormageUser, err => {
-
+      async.each(users, syncFormageUser, (err) => {
         if (err) {
           onError(err);
           return deferred.reject(err);
@@ -148,11 +134,9 @@ module.exports = function init(_FormageUser_, _User_) {
         log.info('Synced all dashboard admin users to Formage user models.');
         deferred.resolve();
       });
-
     }, onError);
 
   return deferred.promise;
-
 };
 
 

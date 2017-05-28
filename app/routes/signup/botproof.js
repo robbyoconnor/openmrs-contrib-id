@@ -1,4 +1,5 @@
 'use strict';
+
 const crypto = require('crypto');
 const async = require('async');
 const _ = require('lodash');
@@ -30,7 +31,7 @@ function reverseIp(req) {
 }
 
 function badRequest(next, optionalMessage) {
-  const err = new Error(`Form submission failed. anti-bot check: ${optionalMessage || ''}`)
+  const err = new Error(`Form submission failed. anti-bot check: ${optionalMessage || ''}`);
   err.statusCode = 400;
   next(err);
 }
@@ -62,7 +63,7 @@ module.exports = {
 
   checkTimestamp: function checkTimestamp(req, res, next) {
     if (!req.body.timestamp) {
-      return badRequest(next, "No timestamp found.");
+      return badRequest(next, 'No timestamp found.');
     }
 
     // Decipher
@@ -77,7 +78,7 @@ module.exports = {
 
     // Throw out malformed timestamps
     if (isNaN(then.valueOf())) {
-      return badRequest(next, "Malformed timestamp");
+      return badRequest(next, 'Malformed timestamp');
     }
 
     const diff = now - then;
@@ -143,12 +144,7 @@ module.exports = {
 
       if (req.body[hashed]) {
         result[f] = req.body[hashed] || '';
-        if (f === "password")
-          log.trace(`unscrambled password field successfully.`);
-        else if (f === "confirmpassword")
-          log.trace(`unscrambled confirmpassword field successfully.`);
-        else
-          log.trace(`unscrambled field "${f}"=${req.body[hashed]}`);
+        if (f === 'password') { log.trace('unscrambled password field successfully.'); } else if (f === 'confirmpassword') { log.trace('unscrambled confirmpassword field successfully.'); } else { log.trace(`unscrambled field "${f}"=${req.body[hashed]}`); }
       }
     }
 
@@ -170,8 +166,7 @@ module.exports = {
   // Invalidate the request if the honeypot has been filled (presumably by a
   // bot). Honeypot field name is configured in conf.signup.js
   checkHoneypot: function checkHoneypot(req, res, next) {
-
-    log.debug("checking honeypot");
+    log.debug('checking honeypot');
 
     if (req.body[signupConf.honeypotFieldName]) {
       return badRequest(next, `Spam bot: Honeypot field ${signupConf.honeypotFieldName} in request body`);
@@ -187,12 +182,12 @@ module.exports = {
     async.waterfall([
       function checkWhitelist(cb) {
         wlist.findOne({
-          address: ip(req)
+          address: ip(req),
         }, (err, inst) => {
           if (err) {
             return next(err);
           }
-          return cb(null, inst ? true : false);
+          return cb(null, !!inst);
         });
       },
       function checkBlacklist(isWhite, cb) {
@@ -213,8 +208,7 @@ module.exports = {
             }
             return cb(null, false);
           });
-
-        }, function callback(err, results) {
+        }, (err, results) => {
           if (err) {
             return next(err);
           }
@@ -227,14 +221,14 @@ module.exports = {
         });
       },
     ]);
-  }
+  },
 };
 
 module.exports.SECRET = SECRET; // used by testing
 
 module.exports.generators = [
   module.exports.generateTimestamp,
-  module.exports.generateSpinner
+  module.exports.generateSpinner,
 ];
 
 const parsers = module.exports.parsers = [];

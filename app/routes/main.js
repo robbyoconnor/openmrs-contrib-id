@@ -1,4 +1,5 @@
 'use strict';
+
 /**
  * homopage for logged-in users
  */

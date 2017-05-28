@@ -1,4 +1,5 @@
 'use strict';
+
 /**
  * The contents of this file are subject to the OpenMRS Public License
  * Version 1.1 (the "License"); you may not use this file except in
@@ -32,7 +33,7 @@ exports.openmrsHelper = (req, res, next) => {
     _.merge(res.locals, {
       connected: true,
       user: req.session.user,
-      mailHash: mailHash
+      mailHash,
     });
   } else {
     res.locals.connected = false;
@@ -51,7 +52,6 @@ exports.restrictTo = role => (req, res, next) => {
       return res.redirect('/');
     }
     return res.redirect(url.resolve(conf.site.url, `/login?destination=${encodeURIComponent(req.originalUrl)}`));
-
   };
 
   if (req.session.user && _.includes(req.session.user.groups, role)) {
@@ -82,7 +82,7 @@ exports.stripNewlines = (req, res, next) => {
   log.trace(`before: ${req.body.loginusername}`);
   if (req.body) {
     for (const field in req.body) {
-      req.body[field] = req.body[field].replace(/(\r\n|\n|\r)/gm, "");
+      req.body[field] = req.body[field].replace(/(\r\n|\n|\r)/gm, '');
     }
 
     log.trace(`after: ${req.body.loginusername}`);

@@ -1,4 +1,5 @@
 'use strict';
+
 /**
  * The contents of this file are subject to the OpenMRS Public License
  * Version 1.1 (the "License"); you may not use this file except in
@@ -32,11 +33,11 @@ const bindCredentials = serverAttr.password;
 
 // LDAP client used for general operation
 const client = ldap.createClient({
-  url: url,
+  url,
   maxConnections: 10,
   bindDN: systemDN,
-  bindCredentials: bindCredentials,
-  queueDisable: true, //fail fast when connections times out. https://github.com/mcavage/node-ldapjs/issues/328
+  bindCredentials,
+  queueDisable: true, // fail fast when connections times out. https://github.com/mcavage/node-ldapjs/issues/328
   reconnect: { // tries to reconnect if LDAP server is down. https://github.com/mcavage/node-ldapjs/issues/403
     initialDelay: 100,
     maxDelay: 500,
@@ -49,7 +50,7 @@ const client = ldap.createClient({
 // Convert a normal user object into proper ldap form **with out groups**
 // and check the types of the user's attributes,
 // throw out an error if anything is wrong.
-const checkAndConvert = user => {
+const checkAndConvert = (user) => {
   const invalid = (!_.isString(user.username) || !_.isString(user.password) ||
     !_.isString(user.firstName) || !_.isString(user.lastName) ||
     !_.isString(user.displayName || !_.isString(user.primaryEmail)));
@@ -77,7 +78,7 @@ const searchRaw = (username, attributes, cb) => {
   const base = getAll ? userAttr.baseDn : `uid=${username},${userAttr.baseDn}`;
   const options = {
     scope: getAll ? 'sub' : 'base',
-    attributes: attributes,
+    attributes,
   };
 
   client.search(base, options, (err, res) => {
@@ -85,30 +86,29 @@ const searchRaw = (username, attributes, cb) => {
       return cb(err);
     }
     const ret = [];
-    res.on('searchEntry', entry => {
+    res.on('searchEntry', (entry) => {
       ret.push(entry.object);
     });
-    res.on('error', err => {
+    res.on('error', (err) => {
       if (err.code === 32) { // not found, no such dn
         return cb(null, null);
       }
       log.error(`error: ${err.message}`);
       return cb(err);
     });
-    res.on('end', result => {
+    res.on('end', (result) => {
       log.debug(`ldap search ended with status: ${result.status}`);
       if (!ret.length) {
         return cb(null, null);
       } else if (ret.length === 1) {
         return cb(null, ret[0]);
-      } else {
-        return cb(null, _.filter(ret, item => item.uid));
       }
+      return cb(null, _.filter(ret, item => item.uid));
     });
   });
 };
 
-const convertUser = old => {
+const convertUser = (old) => {
   const user = {};
   user.username = old[userAttr.username];
   user.password = old[userAttr.password];
@@ -138,7 +138,7 @@ const searchUser = (username, cb) => {
     } else if (_.isArray(old)) {
       async.map(old, (el, callback) => {
         callback(null, convertUser(el));
-      }, (err, users) => cb(null, users))
+      }, (err, users) => cb(null, users));
     } else {
       return cb(null, convertUser(old));
     }
@@ -159,14 +159,14 @@ const searchGroups = (username, cb) => {
       return cb(err);
     }
     const groups = [];
-    res.on('searchEntry', entry => {
+    res.on('searchEntry', (entry) => {
       groups.push(entry.object[groupAttr.rdn]);
     });
-    res.on('error', err => {
+    res.on('error', (err) => {
       log.error(err);
       return cb(err);
     });
-    res.on('end', result => {
+    res.on('end', (result) => {
       log.debug(`ldap search ended with status: ${result.status}`);
       return cb(null, groups);
     });
@@ -185,10 +185,10 @@ exports.authenticate = (username, pass, cb) => {
   log.debug(`${username}: will authenticate`);
   // client used for authenticating users specially
   const userClient = ldap.createClient({
-    url: url,
+    url,
   });
   const userdn = `${userAttr.rdn}=${username},${userAttr.baseDn}`;
-  userClient.bind(userdn, pass, err => {
+  userClient.bind(userdn, pass, (err) => {
     userClient.unbind();
     return cb(err);
   });
@@ -251,7 +251,7 @@ exports.getAllUsers = cb => searchUser('*', (err, users) => {
 // Note that the username and password couldn't be changed this way
 const getChanges = (newUser, oldUser) => {
   const ret = [];
-  const attrs = ['firstName', 'lastName', 'displayName', 'primaryEmail', ];
+  const attrs = ['firstName', 'lastName', 'displayName', 'primaryEmail'];
   const ldapNames = [userAttr.firstname, userAttr.lastname, userAttr.displayname,
     userAttr.email,
   ];
@@ -265,7 +265,7 @@ const getChanges = (newUser, oldUser) => {
     if (_.isEmpty(oldUser[attr]) && !_.isEmpty(newUser)) {
       // this should be impossible in normal condtion
       item.operation = 'add';
-    } else if (oldUser[attr] === newUser[attr]) { //same
+    } else if (oldUser[attr] === newUser[attr]) { // same
       continue;
     } else {
       item.operation = 'replace';
@@ -299,7 +299,7 @@ exports.updateUser = (user, cb) => {
     if (_.isEmpty(changes)) {
       return next(null, added, removed);
     }
-    client.modify(userDn, changes, err => {
+    client.modify(userDn, changes, (err) => {
       if (err) {
         return next(err);
       }
@@ -339,7 +339,7 @@ exports.updateUser = (user, cb) => {
     diff,
     updateU,
     updateG,
-  ], err => {
+  ], (err) => {
     if (err) {
       return cb(err);
     }
@@ -368,7 +368,7 @@ exports.addUser = (user, cb) => {
   const dn = `${userAttr.rdn}=${user.username},${userAttr.baseDn}`;
 
   async.waterfall([
-    next => {
+    (next) => {
       client.add(dn, userobj, err => next(err));
     },
     exports.updateUser.bind(null, user),
@@ -414,7 +414,7 @@ exports.resetPassword = (username, newPass, cb) => {
   }
 
   // first check the existence
-  const search = next => {
+  const search = (next) => {
     searchRaw(username, 'pwdPolicySubentry', (err, user) => {
       if (err) {
         return next(err);
@@ -436,7 +436,7 @@ exports.resetPassword = (username, newPass, cb) => {
       change.operation = 'add';
     }
 
-    client.modify(entry.dn, change, err => {
+    client.modify(entry.dn, change, (err) => {
       if (err) {
         return next(err);
       }
@@ -455,7 +455,7 @@ exports.resetPassword = (username, newPass, cb) => {
       modification: {
         pwdPolicySubentry: userAttr.passwordResetPolicy,
       },
-    }, ];
+    }];
 
     client.modify(userdn, changes, err => next(err));
   };
@@ -474,7 +474,7 @@ exports.resetPassword = (username, newPass, cb) => {
  */
 exports.lockoutUser = (username, cb) => {
   // find the user
-  const search = next => {
+  const search = (next) => {
     searchRaw(username, 'pwdAccountLockedTime', (err, user) => {
       if (err) {
         return next(err);
@@ -511,7 +511,7 @@ exports.lockoutUser = (username, cb) => {
  */
 exports.enableUser = (username, cb) => {
   // find the user
-  const search = next => {
+  const search = (next) => {
     searchRaw(username, 'pwdAccountLockedTime', (err, user) => {
       if (err) {
         return next(err);

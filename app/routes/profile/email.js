@@ -1,4 +1,5 @@
 'use strict';
+
 /**
  * This file handles all user-email request
  */
@@ -16,9 +17,7 @@ const utils = require('../../utils');
 const validate = require('../../validate');
 
 
-exports = module.exports = app => {
-
-
+exports = module.exports = (app) => {
   app.get('/profile/email/verify/:id', (req, res, next) => {
     // check for valid email verification ID
 
@@ -26,7 +25,7 @@ exports = module.exports = app => {
     let newUser = {};
     const id = utils.urlDecode64(req.params.id);
 
-    const checkVerification = callback => {
+    const checkVerification = (callback) => {
       verification.check(id, (err, valid, locals) => {
         if (!valid) {
           req.flash('error', 'Profile email address verification not found.');
@@ -54,17 +53,17 @@ exports = module.exports = app => {
       });
     };
 
-    const clearRecord = callback => {
+    const clearRecord = (callback) => {
       verification.clear(id, callback);
     };
 
     async.waterfall([
-        checkVerification,
-        findUser,
-        updateUser,
-        clearRecord,
-      ],
-      err => {
+      checkVerification,
+      findUser,
+      updateUser,
+      clearRecord,
+    ],
+      (err) => {
         if (err) {
           return next(err);
         }
@@ -80,10 +79,9 @@ exports = module.exports = app => {
 
   app.get('/profile/email/resend/:id', mid.forceLogin,
     (req, res, next) => {
-
       const id = utils.urlDecode64(req.params.id);
       // check for valid id
-      verification.resend(id, err => {
+      verification.resend(id, (err) => {
         if (err) {
           return next(err);
         }
@@ -97,8 +95,6 @@ exports = module.exports = app => {
   // add new email
   app.post('/profile/email', mid.forceLogin,
     (req, res, next) => {
-
-
       const user = req.session.user;
       const email = req.body.newEmail;
 
@@ -118,7 +114,7 @@ exports = module.exports = app => {
       };
 
 
-      const validation = callback => {
+      const validation = (callback) => {
         async.waterfall([
           validate.chkEmailInvalidOrDup.bind(null, email),
           findDuplicateInVerification,
@@ -129,15 +125,15 @@ exports = module.exports = app => {
           if (validateError) {
             return res.json({
               fail: {
-                email: validateError
-              }
+                email: validateError,
+              },
             });
           }
           return callback();
         });
       };
 
-      const sendVerification = callback => {
+      const sendVerification = (callback) => {
         log.debug(`${user.username}: email address ${email} will be verified`);
         // create verification instance
         verification.begin({
@@ -151,24 +147,22 @@ exports = module.exports = app => {
             displayName: user.displayName,
             username: user.username,
             mail: email,
-          }
+          },
         }, callback);
       };
 
       async.series([
         validation,
         sendVerification,
-      ], err => {
+      ], (err) => {
         if (err) {
           return next(err);
         }
         req.flash('success', `Successfully added ${email} pending verification. Please check your e-mail.`);
         return res.json({
-          success: true
+          success: true,
         });
       });
-
-
     });
 
   app.get('/profile/email/delete/:email', mid.forceLogin, (req, res, next) => {
@@ -181,8 +175,8 @@ exports = module.exports = app => {
       return res.redirect('/profile');
     }
     // verified
-    if (-1 !== _.indexOf(user.emailList, email)) {
-      const findUser = callback => {
+    if (_.indexOf(user.emailList, email) !== -1) {
+      const findUser = (callback) => {
         User.findByUsername(user.username, callback);
       };
 
@@ -193,9 +187,9 @@ exports = module.exports = app => {
       };
 
       async.waterfall([
-          findUser,
-          updateUser,
-        ],
+        findUser,
+        updateUser,
+      ],
         (err, user) => {
           if (err) {
             return next(err);
@@ -211,7 +205,7 @@ exports = module.exports = app => {
     // not verified
     log.debug('deleting verification for new email');
     const MSG = 'Email to delete not found'; // remove verifications
-    const findVerification = callback => {
+    const findVerification = (callback) => {
       verification.search(email, 'new email', (err, instances) => {
         if (err) {
           return callback(err);
@@ -230,13 +224,13 @@ exports = module.exports = app => {
       verification.clear(instance.uuid, callback);
     };
 
-    if (-1 === _.indexOf(user.emailList, email)) {
+    if (_.indexOf(user.emailList, email) === -1) {
       // delete veritification
       async.waterfall([
-          findVerification,
-          deleteVerification,
-        ],
-        err => {
+        findVerification,
+        deleteVerification,
+      ],
+        (err) => {
           if (err) {
             if (err.message === MSG) {
               return;
@@ -257,7 +251,7 @@ exports = module.exports = app => {
       return res.redirect('/profile');
     }
 
-    const findUser = callback => {
+    const findUser = (callback) => {
       User.findByUsername(user.username, callback);
     };
 
@@ -267,9 +261,9 @@ exports = module.exports = app => {
     };
 
     async.waterfall([
-        findUser,
-        setEmail,
-      ],
+      findUser,
+      setEmail,
+    ],
       (err, user) => {
         if (err) {
           return next(err);
@@ -280,6 +274,4 @@ exports = module.exports = app => {
         return res.redirect('/profile');
       });
   });
-
-
 };

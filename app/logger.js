@@ -1,4 +1,5 @@
 'use strict';
+
 /**
  * The contents of this file are subject to the OpenMRS Public License
  * Version 1.1 (the "License"); you may not use this file except in
@@ -29,10 +30,9 @@ log4js.loadAppender('file');
 
 const set = new Set();
 const logFile = log4js.appenders.file(
-  path.join(__dirname, conf.logger.relativePath)
-);
+  path.join(__dirname, conf.logger.relativePath));
 
-log4js.addLogger = name => {
+log4js.addLogger = (name) => {
   if (!set.has(name)) {
     set.add(name);
     log4js.addAppender(logFile, name);
@@ -41,6 +41,6 @@ log4js.addLogger = name => {
 };
 
 const signupFile = log4js.appenders.file(
-  path.join(__dirname, '/../logs/signuplog.log')
-);
+  path.join(__dirname, '/../logs/signuplog.log'));
+
 log4js.addAppender(signupFile, 'signup');

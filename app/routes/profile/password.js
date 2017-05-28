@@ -1,4 +1,5 @@
 'use strict';
+
 /**
  * This file handles users' password related request.
  */
@@ -15,14 +16,10 @@ const mid = require('../../express-middleware');
 const User = require('../../models/user');
 
 
-
-exports = module.exports = app => {
-
-
+exports = module.exports = (app) => {
   // AJAX
   app.post('/password', mid.forceLogin,
     (req, res, next) => {
-
       if (!req.xhr) {
         return next();
       }
@@ -32,7 +29,7 @@ exports = module.exports = app => {
 
       // Look up the user's canonical record to read the password. (it's not stored
       // on req.session.user for security purposes.)
-      const findUser = callback => {
+      const findUser = (callback) => {
         User.findByUsername(updUser.username, (err, user) => {
           if (err) {
             return callback(err);
@@ -58,12 +55,11 @@ exports = module.exports = app => {
         validate.perform(validators, (err, validateError) => {
           if (!_.isEmpty(validateError)) {
             return res.json({
-              fail: validateError
+              fail: validateError,
             });
           }
           return callback(null, user);
         });
-
       };
 
 
@@ -73,20 +69,18 @@ exports = module.exports = app => {
       };
 
       async.waterfall([
-          findUser,
-          validation,
-          changePassword,
-        ],
+        findUser,
+        validation,
+        changePassword,
+      ],
         (err, user) => {
           log.trace('password change no errors');
           log.info(`${updUser.username}: password updated`);
           req.flash('success', 'Password updated successfully');
           req.session.user = user;
           return res.json({
-            success: true
+            success: true,
           });
         });
     });
-
-
 };

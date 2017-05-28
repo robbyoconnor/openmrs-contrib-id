@@ -1,4 +1,5 @@
 'use strict';
+
 /**
  * This file handles the password-reset functionalities
  */
@@ -16,9 +17,7 @@ const log = require('log4js').addLogger('express');
 
 const User = require('../../models/user');
 
-exports = module.exports = app => {
-
-
+exports = module.exports = (app) => {
   app.get('/reset', mid.forceLogout, (req, res, next) => {
     res.render('views/reset-public');
   });
@@ -36,16 +35,15 @@ exports = module.exports = app => {
       filter.emailList = resetCredential;
     }
 
-    const checkInput = callback => {
+    const checkInput = (callback) => {
       if (resetCredential === '') {
         req.flash('error', REQUIRED);
         return res.redirect('/reset');
-      } else {
-        callback();
       }
+      callback();
     };
 
-    const findUser = callback => {
+    const findUser = (callback) => {
       User.findByFilter(filter, (err, user) => {
         if (err) {
           return callback(err);
@@ -66,13 +64,13 @@ exports = module.exports = app => {
       const sendEmail = (address, cb) => {
         verification.begin({
           addr: address,
-          username: username,
+          username,
           category: 'new password',
           callback: '/reset',
           subject: `[OpenMRS] Password Reset for ${username}`,
           templatePath: path.join(emailPath, 'password-reset.pug'),
           locals: {
-            username: username,
+            username,
             displayName: user.displayName,
             allEmails: emails,
           },
@@ -82,11 +80,11 @@ exports = module.exports = app => {
     };
 
     async.waterfall([
-        checkInput,
-        findUser,
-        sendEmails,
-      ],
-      err => {
+      checkInput,
+      findUser,
+      sendEmails,
+    ],
+      (err) => {
         if (err && err.message !== USER_NOT_FOUND_MSG) {
           return next(err);
         }
@@ -99,7 +97,6 @@ exports = module.exports = app => {
 
   app.get('/reset/:id', mid.forceLogout,
     (req, res, next) => {
-
       const id = utils.urlDecode64(req.params.id);
       verification.check(id, (err, valid, locals) => {
         if (err) {
@@ -119,14 +116,12 @@ exports = module.exports = app => {
 
   app.post('/reset/:id', mid.forceLogout,
     (req, res, next) => {
-
-
       const id = utils.urlDecode64(req.params.id);
       const npass = req.body.newPassword;
       const cpass = req.body.confirmPassword;
 
 
-      const validation = callback => {
+      const validation = (callback) => {
         const validators = {
           newPassword: validate.chkLength.bind(null, npass, 8),
           confirmPassword: validate.chkDiff.bind(null, npass, cpass),
@@ -140,12 +135,12 @@ exports = module.exports = app => {
             return callback();
           }
           res.json({
-            fail: failures
+            fail: failures,
           });
         });
       };
 
-      const chkVerification = callback => {
+      const chkVerification = (callback) => {
         verification.check(id, (err, valid, locals) => {
           if (err) {
             return next(err);
@@ -166,7 +161,7 @@ exports = module.exports = app => {
           }
           user.password = npass;
 
-          user.save(err => {
+          user.save((err) => {
             if (err) {
               log.error('password reset failed');
               return next(err);
@@ -177,7 +172,7 @@ exports = module.exports = app => {
               'You may now log in across the OpenMRS Community.');
             res.redirect('/');
           });
-        })
+        });
       };
 
       async.waterfall([
@@ -186,6 +181,4 @@ exports = module.exports = app => {
         update,
       ]);
     });
-
-
 };

@@ -1,4 +1,5 @@
 'use strict';
+
 /**
  * Programmtically execute mocha tests
  */
@@ -21,8 +22,8 @@ const mocha = new Mocha({
 });
 
 // recursivly add a folder for testing
-const addFolder = folder => {
-  fs.readdirSync(folder).forEach(file => {
+const addFolder = (folder) => {
+  fs.readdirSync(folder).forEach((file) => {
     const p = path.join(folder, file);
     if (fs.statSync(p).isDirectory()) {
       return addFolder(p);
@@ -39,16 +40,16 @@ addFolder('tests');
 
 // some preparation
 async.series([
-    callback => {
-      mongoose.connect(conf.mongoURI, callback);
-    },
-  ],
-  err => {
+  (callback) => {
+    mongoose.connect(conf.mongoURI, callback);
+  },
+],
+  (err) => {
     if (err) {
       console.error(err);
       process.exit();
     }
-    mocha.run(failures => {
+    mocha.run((failures) => {
       process.exit(failures);
     });
   });

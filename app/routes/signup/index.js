@@ -1,4 +1,5 @@
 'use strict';
+
 /**
  * This file handles requests related with signup operations
  */
@@ -24,13 +25,10 @@ ROUTES
 ======
 */
 
-exports = module.exports = app => {
-
-
+exports = module.exports = (app) => {
   // get signup from /signup or from / and handle accordingly
   app.get(/^\/signup\/?$|^\/$/i, botproof.generators,
     (req, res, next) => {
-
       if (req.session.user) {
         return next(); // pass onward if a user is signed in
       }
@@ -43,13 +41,10 @@ exports = module.exports = app => {
   // prevent from getting 404'd if a logged-in user hits /signup
   app.get('/signup', mid.forceLogout);
 
-  app.post('/signup', (req, res, next) => {
-    return next();
-  });
+  app.post('/signup', (req, res, next) => next());
 
   app.post('/signup', mid.forceLogout, botproof.parsers,
     (req, res, next) => {
-
       if (!req.xhr) {
         return res.redirect('/');
       }
@@ -67,7 +62,7 @@ exports = module.exports = app => {
       id = id.toLowerCase();
 
       // perform validation
-      const validation = callback => {
+      const validation = (callback) => {
         const validators = {
           username: validate.chkUsernameInvalidOrDup.bind(null, id),
           primaryEmail: validate.chkEmailInvalidOrDup.bind(null, email),
@@ -85,12 +80,12 @@ exports = module.exports = app => {
             return callback();
           }
           res.json({
-            fail: failures
+            fail: failures,
           });
         });
       };
 
-      const saveUser = callback => {
+      const saveUser = (callback) => {
         const newUser = new User({
           username: id,
           firstName: first,
@@ -104,7 +99,7 @@ exports = module.exports = app => {
         newUser.save(callback);
       };
 
-      const sendVerificationEmail = callback => {
+      const sendVerificationEmail = (callback) => {
         const verificationOptions = {
           addr: email,
           subject: '[OpenMRS] Welcome to the OpenMRS Community',
@@ -116,23 +111,23 @@ exports = module.exports = app => {
             displayName: `${first} ${last}`,
             username: id,
           },
-          timeout: 0
+          timeout: 0,
         };
         log.debug('Sending signup email verification');
         verification.begin(verificationOptions, callback);
       };
 
       async.series([
-          validation,
-          saveUser,
-          sendVerificationEmail,
-        ],
-        err => {
+        validation,
+        saveUser,
+        sendVerificationEmail,
+      ],
+        (err) => {
           if (err) {
             return next(err);
           }
           res.json({
-            success: true
+            success: true,
           });
         });
     });
@@ -147,14 +142,14 @@ exports = module.exports = app => {
     const INVALID_MSG = 'The requested signup verification does not exist, ' +
       'it might have expired.';
 
-    const findUsernameByVerifyID = callback => {
+    const findUsernameByVerifyID = (callback) => {
       verification.check(id, (err, valid, locals) => {
         if (err) {
           return callback(err);
         }
         if (!valid) {
           return callback({
-            failMessage: INVALID_MSG
+            failMessage: INVALID_MSG,
           });
         }
         return callback(null, locals.username);
@@ -169,10 +164,10 @@ exports = module.exports = app => {
     };
 
     async.waterfall([
-        findUsernameByVerifyID,
-        User.findByUsername.bind(User),
-        updateUser,
-      ],
+      findUsernameByVerifyID,
+      User.findByUsername.bind(User),
+      updateUser,
+    ],
       (err, user) => {
         if (err) {
           if (err.failMessage) {
@@ -201,11 +196,11 @@ exports = module.exports = app => {
 
     if (!isValid) {
       return res.json({
-        illegal: true
+        illegal: true,
       });
     }
 
-    User.findByUsername(username, function chkUser(err, user) {
+    User.findByUsername(username, (err, user) => {
       if (err) {
         log.error('error in checkuser');
         log.error(err);
@@ -213,11 +208,11 @@ exports = module.exports = app => {
       }
       if (user) {
         return res.json({
-          exists: true
+          exists: true,
         });
       }
       return res.json({
-        exists: false
+        exists: false,
       });
     });
   });
@@ -232,21 +227,19 @@ exports = module.exports = app => {
         log.error(err);
         return;
       }
-      if (true === errState) {
+      if (errState === true) {
         return res.json({
-          illegal: true
+          illegal: true,
         });
       }
       if (errState) {
         return res.json({
-          exists: true
+          exists: true,
         });
       }
       return res.json({
-        exists: false
+        exists: false,
       });
     });
   });
-
-
 };

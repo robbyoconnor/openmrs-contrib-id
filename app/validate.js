@@ -1,4 +1,5 @@
 'use strict';
+
 /**
  * The contents of this file are subject to the OpenMRS Public License
  * Version 1.1 (the "License"); you may not use this file except in
@@ -73,7 +74,7 @@ validate.chkEmailInvalid = (email, callback) => {
     return callback(null, true);
   }
   const allowPlus = conf.validation.allowPlusInEmail;
-  if (-1 !== _.indexOf(email, '+') && !allowPlus) {
+  if (_.indexOf(email, '+') !== -1 && !allowPlus) {
     // disobey the allowplus '+' rule
     return callback(null, EMAIL_PLUS_MSG);
   }
@@ -115,7 +116,7 @@ validate.chkEmpty = (str, callback) => {
   return callback(null, false);
 };
 
-//TODO Add maxlength limitation
+// TODO Add maxlength limitation
 validate.chkLength = (str, minLen, callback) => {
   if (_.isEmpty(str) || str.length < minLen) {
     // avoid undefined error

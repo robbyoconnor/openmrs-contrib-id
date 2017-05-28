@@ -1,7 +1,8 @@
 'use strict';
+
 const fs = require('fs');
 
-fs.readdirSync(__dirname).forEach(file => {
+fs.readdirSync(__dirname).forEach((file) => {
   const regex = /^(.*).js$/.exec(file);
   if (!regex[1]) {
     return;

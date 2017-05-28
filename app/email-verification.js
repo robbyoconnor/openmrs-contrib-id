@@ -1,4 +1,5 @@
 'use strict';
+
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const fs = require('fs');
@@ -18,7 +19,7 @@ const EmailVerification = require('./models/email-verification');
 // update nodemailer
 const transporter = nodemailer.createTransport(conf.email.smtp);
 
-const simpleCallback = err => {
+const simpleCallback = (err) => {
   if (err) {
     log.error(err);
   }
@@ -54,17 +55,17 @@ exports.begin = (settings, callback) => {
   function storeInfo(cb) {
     const veriInfo = {
       uuid: uuid.v4(),
-      addr: addr,
-      category: category,
-      username: username,
-      description: description,
-      settings: settings,
-      locals: locals,
+      addr,
+      category,
+      username,
+      description,
+      settings,
+      locals,
     };
     const verification = new EmailVerification(veriInfo);
     log.trace('verification prepared for DB entry');
 
-    verification.save(err => {
+    verification.save((err) => {
       if (err) {
         return cb(err);
       }
@@ -76,7 +77,7 @@ exports.begin = (settings, callback) => {
   function sendMail(uuid, cb) {
     uuid = utils.urlEncode64(uuid);
     _.merge(locals, {
-      addr: addr,
+      addr,
       siteURL: conf.site.url,
       imgURL: url.resolve(conf.site.url, '/resource/images/logo.png'),
       verifyURL: url.resolve(conf.site.url, path.join(callbackPath, uuid)),
@@ -87,8 +88,8 @@ exports.begin = (settings, callback) => {
       transporter.sendMail({
         from: "'OpenMRS ID Dashboard' <id-noreply@openmrs.org>",
         to: addr,
-        subject: subject,
-        html: rendered
+        subject,
+        html: rendered,
       }, (e, success) => {
         if (e) {
           return cb(e);
@@ -112,7 +113,7 @@ exports.begin = (settings, callback) => {
 exports.resend = (uuid, callback) => {
   // get the verification instance
   EmailVerification.findOne({
-    uuid: uuid
+    uuid,
   }, (err, verification) => {
     if (err) {
       return callback(err);
@@ -123,7 +124,7 @@ exports.resend = (uuid, callback) => {
       return callback(new Error(msg));
     }
     log.debug('found verification instance.');
-    verification.remove(err => {
+    verification.remove((err) => {
       if (err) {
         return callback(err);
       }
@@ -143,7 +144,7 @@ exports.check = (uuid, callback) => {
   }
 
   EmailVerification.findOne({
-    uuid: uuid
+    uuid,
   }, (err, verification) => {
     if (err) {
       return callback(err);
@@ -164,7 +165,7 @@ exports.clear = (uuid, callback) => {
     callback = simpleCallback;
   }
   EmailVerification.findOneAndRemove({
-    uuid: uuid
+    uuid,
   }, callback);
 };
 
@@ -175,11 +176,11 @@ exports.search = (credential, category, callback) => {
   let terms;
   if (conf.user.usernameRegex.test(credential)) {
     terms = {
-      username: credential
+      username: credential,
     }; // is a user id
   } else if (conf.email.validation.emailRegex.test(credential)) {
     terms = {
-      addr: credential // is an email address
+      addr: credential, // is an email address
     };
   } else {
     return callback(new Error('invalid credential')); // return no matches

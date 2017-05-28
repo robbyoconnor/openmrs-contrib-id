@@ -1,4 +1,5 @@
 'use strict';
+
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const _ = require('lodash');
@@ -43,7 +44,7 @@ const emailSchema = new Schema({
 });
 
 
-if ('production' === process.env.NODE_ENV) {
+if (process.env.NODE_ENV === 'production') {
   emailSchema.set('autoIndex', false);
 }
 

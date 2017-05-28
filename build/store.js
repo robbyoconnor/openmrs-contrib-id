@@ -1,4 +1,5 @@
 'use strict';
+
 const async = require('async');
 const _ = require('lodash');
 
@@ -24,19 +25,19 @@ if (_.isUndefined(userList)) {
 }
 
 
-const store = groupInfo => {
+const store = (groupInfo) => {
   const ret = {};
   ret.name = groupInfo.groupName;
   ret.member = {};
-  _.forEach(groupInfo.member, user => {
+  _.forEach(groupInfo.member, (user) => {
     ret.member[user] = true;
   });
   return ret;
 };
 
-const getGroups = username => {
+const getGroups = (username) => {
   const ret = [];
-  _.forEach(groups, group => {
+  _.forEach(groups, (group) => {
     if (group.member[username]) {
       ret.push(group.name);
     }
@@ -44,17 +45,17 @@ const getGroups = username => {
   return ret;
 };
 
-const addGroups = next => {
+const addGroups = (next) => {
   log.info('\n##################################  Starting to sync\n');
   async.map(groupList, (item, callback) => {
-      const groupInfo = _.cloneDeep(item);
-      groups.push(store(groupInfo));
-      groupInfo.member = [];
-      groupInfo.inLDAP = true;
-      const group = new Group(groupInfo);
-      group.save(callback);
-    },
-    err => {
+    const groupInfo = _.cloneDeep(item);
+    groups.push(store(groupInfo));
+    groupInfo.member = [];
+    groupInfo.inLDAP = true;
+    const group = new Group(groupInfo);
+    group.save(callback);
+  },
+    (err) => {
       if (err) {
         log.error('screwed');
         log.error(err);
@@ -66,11 +67,11 @@ const addGroups = next => {
 };
 
 let deletedEmails = [];
-const checkUsers = next => {
+const checkUsers = (next) => {
   let count = {};
-  const addToMap = mail => {
+  const addToMap = (mail) => {
     if (_.isArray(mail)) {
-      _.forEach(mail, item => {
+      _.forEach(mail, (item) => {
         addToMap(item);
       });
       return;
@@ -84,12 +85,12 @@ const checkUsers = next => {
   };
 
   // preparation
-  _.forEach(userList, user => {
+  _.forEach(userList, (user) => {
     addToMap(user.emailList);
   });
 
   // delete duplicated nonprimary emails
-  _.forEach(userList, user => {
+  _.forEach(userList, (user) => {
     for (let i = user.emailList.length - 1; i >= 0; --i) {
       const mail = user.emailList[i];
       const cp = mail.toLowerCase();
@@ -108,10 +109,10 @@ const checkUsers = next => {
 
   // recount and mark users with duplicated primaryEmail
   count = {};
-  _.forEach(userList, user => {
+  _.forEach(userList, (user) => {
     addToMap(user.primaryEmail);
   });
-  _.forEach(userList, user => {
+  _.forEach(userList, (user) => {
     const mail = user.primaryEmail;
     if (count[mail] > 1) {
       user.duplicate = true;
@@ -121,28 +122,28 @@ const checkUsers = next => {
 };
 
 const skipped = [];
-const addUsers = next => {
+const addUsers = (next) => {
   async.mapSeries(userList, (item, callback) => {
-      log.info('Adding user ', item.username);
-      const user = new User(item);
-      if (item.duplicate) {
-        log.warn(`Skipping user ${item.username} for duplicated primaryEmail.`);
-        const copy = _.cloneDeep(item);
-        delete copy.duplicate;
-        copy.groups = getGroups(user.username);
-        skipped.push(copy);
-        return callback();
-      }
-      user.inLDAP = true;
-      user.locked = false; /// ToDo
-      user.createdAt = undefined;
-      user.skipLDAP = true;
+    log.info('Adding user ', item.username);
+    const user = new User(item);
+    if (item.duplicate) {
+      log.warn(`Skipping user ${item.username} for duplicated primaryEmail.`);
+      const copy = _.cloneDeep(item);
+      delete copy.duplicate;
+      copy.groups = getGroups(user.username);
+      skipped.push(copy);
+      return callback();
+    }
+    user.inLDAP = true;
+    user.locked = false; // / ToDo
+    user.createdAt = undefined;
+    user.skipLDAP = true;
 
-      const groups = getGroups(user.username);
-      log.debug('before calling save groups');
-      user.addGroupsAndSave(groups, callback);
-    },
-    err => {
+    const groups = getGroups(user.username);
+    log.debug('before calling save groups');
+    user.addGroupsAndSave(groups, callback);
+  },
+    (err) => {
       if (err) {
         log.error('screwed');
         log.error(err);
@@ -150,7 +151,7 @@ const addUsers = next => {
       }
       const skipObj = {
         skippedUsers: skipped,
-        deletedEmails: deletedEmails,
+        deletedEmails,
       };
       const data = JSON.stringify(skipObj, null, 4);
       log.info('Stored skipped users and deleted emails to "skipped.json"');
@@ -163,6 +164,6 @@ async.series([
   addGroups,
   checkUsers,
   addUsers,
-], err => {
+], (err) => {
   process.exit();
 });

@@ -1,4 +1,5 @@
 'use strict';
+
 const log = require('log4js').addLogger('express');
 const uuid = require('uuid');
 
@@ -15,16 +16,16 @@ exports = module.exports = (err, req, res, next) => {
     res.statusCode = 500;
     if (req.accepts('text/html')) {
       const locals = {
-        trackId: trackId,
+        trackId,
       };
-      if ('development' === process.env.NODE_ENV) {
+      if (process.env.NODE_ENV === 'development') {
         locals.e = err;
       }
       res.render('views/500', locals);
     } else if (req.accepts('application/json')) {
       res.status(res.statusCode).json({
-        trackId: trackId,
-        error: err
+        trackId,
+        error: err,
       });
     } else {
       res.status(res.statusCode).send(`Error: ${err.message}\n\n${err.stack}`);

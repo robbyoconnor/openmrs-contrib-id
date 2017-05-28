@@ -1,4 +1,5 @@
 'use strict';
+
 const mongoose = require('mongoose');
 require('./logger');
 const log = require('log4js').addLogger('mongodb');
@@ -17,7 +18,7 @@ const options = {
     keepAlive: 300000,
     connectTimeoutMS: 30000,
   },
-}
+};
 
 const db = mongoose.connect(uri, options);
 

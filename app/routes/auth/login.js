@@ -1,4 +1,5 @@
 'use strict';
+
 /**
  * This is the login logic for Dashboard
  */
@@ -19,34 +20,31 @@ const log = require('log4js').addLogger('express');
 
 const User = require('../../models/user');
 
-exports = module.exports = app => {
-
-
+exports = module.exports = (app) => {
   app.get('/login', mid.forceLogout,
     (req, res, next) => {
       res.render('views/login');
-    }
-  );
+    });
 
   app.post('/login', mid.stripNewlines, (req, res, next) => {
     const username = req.body.loginusername || '';
     const password = req.body.loginpassword || '';
     const redirect = req.body.destination || '/';
 
-    const checkInput = callback => {
+    const checkInput = (callback) => {
       if (utils.isUsernameValid(username)) {
         return callback(null, {
-          username: username
+          username,
         });
       }
       if (utils.isEmailValid(username)) {
         return callback(null, {
-          email: username
+          email: username,
         });
       }
       const invalid = 'Please use a valid username or email to sign in';
       return callback({
-        loginFail: invalid
+        loginFail: invalid,
       });
     };
 
@@ -57,7 +55,7 @@ exports = module.exports = app => {
         }
         if (_.isEmpty(user)) {
           return callback({
-            loginFail: 'This user does not exist'
+            loginFail: 'This user does not exist',
           });
         }
         return callback(null, user);
@@ -76,7 +74,7 @@ exports = module.exports = app => {
       if (user.locked) {
         return callback({
           loginFail: 'You must verify your email address before logging in. ' +
-            'Check your email for verification instructions.'
+            'Check your email for verification instructions.',
         });
       }
       return callback(null, user);
@@ -85,23 +83,23 @@ exports = module.exports = app => {
     const checkPassword = (user, callback) => {
       if (_.isEmpty(user.password)) {
         return callback({
-          loginFail: 'Your password should be reset first'
+          loginFail: 'Your password should be reset first',
         });
       }
       if (!utils.checkSSHA(password, user.password)) {
         return callback({
-          loginFail: 'Wrong password'
+          loginFail: 'Wrong password',
         });
       }
       return callback(null, user);
     };
 
     async.waterfall([
-        checkInput,
-        findUser,
-        checkLocked,
-        checkPassword,
-      ],
+      checkInput,
+      findUser,
+      checkLocked,
+      checkPassword,
+    ],
       (err, user) => {
         if (err) {
           if (_.isEmpty(err.loginFail)) {
@@ -114,12 +112,12 @@ exports = module.exports = app => {
           _.merge(res.locals, {
             fail: {
               loginusername: false,
-              loginpassword: true
+              loginpassword: true,
             },
             values: {
               loginusername: username,
-              loginpassword: password
-            }
+              loginpassword: password,
+            },
           });
           if (req.body.destination) { // redirect to the destination login page
             const dest = url.resolve(conf.site.url, `/login?destination=${encodeURIComponent(req.body.destination)}`);
@@ -138,6 +136,4 @@ exports = module.exports = app => {
         res.redirect(url.resolve(conf.site.url, decodeURIComponent(redirect)));
       });
   });
-
-
 };

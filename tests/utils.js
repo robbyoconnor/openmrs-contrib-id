@@ -1,5 +1,6 @@
 'use strict';
-/*jshint expr: true*/
+
+/* jshint expr: true*/
 const crypto = require('crypto');
 const expect = require('chai').expect;
 const utils = require('../app/utils');

@@ -1,4 +1,5 @@
 'use strict';
+
 /**
  * Some utility tools
  */
@@ -19,7 +20,6 @@ exports.getSSHA = (cleartext, salt) => {
   const digest = sum.digest('binary');
   const ret = `{SSHA}${new Buffer(digest + salt, 'binary').toString('base64')}`;
   return ret;
-
 };
 
 exports.checkSSHA = (cleartext, hashed) => {
@@ -32,7 +32,7 @@ exports.checkSSHA = (cleartext, hashed) => {
   return newHash === hashed;
 };
 
-exports.isUsernameValid = username => {
+exports.isUsernameValid = (username) => {
   const usernameRegex = conf.user.usernameRegex;
   if (_.isEmpty(username) || !usernameRegex.test(username)) {
     // ensure it not empty first, avoid auto-cast for (null) or (undefined)
@@ -41,7 +41,7 @@ exports.isUsernameValid = username => {
   return true;
 };
 
-exports.isEmailValid = email => {
+exports.isEmailValid = (email) => {
   const emailRegex = conf.email.validation.emailRegex;
   if (_.isEmpty(email) || !emailRegex.test(email)) {
     return false;
@@ -50,24 +50,24 @@ exports.isEmailValid = email => {
 };
 
 // encode a string into base64
-exports.encode64 = str => {
+exports.encode64 = (str) => {
   const tmp = new Buffer(str);
   return tmp.toString('base64');
 };
 
 // decode a base64 string
-exports.decode64 = str => {
+exports.decode64 = (str) => {
   const tmp = new Buffer(str, 'base64');
   return tmp.toString('utf8');
 };
 
 // URL safe Base64 functions
-exports.urlEncode64 = str => {
+exports.urlEncode64 = (str) => {
   str = exports.encode64(str);
   return str.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 };
 
-exports.urlDecode64 = str => {
+exports.urlDecode64 = (str) => {
   str = str.replace(/-/g, '+').replace(/_/g, '/');
   let r = str.length % 4;
   while (r % 4) {
@@ -78,7 +78,7 @@ exports.urlDecode64 = str => {
 };
 
 // new Recaptcha validator
-const Recaptcha = exports.Recaptcha = function(secret) {
+const Recaptcha = exports.Recaptcha = function (secret) {
   if (_.isUndefined(secret)) {
     console.error('missing recaptcha secret');
     throw new Error('missing recaptcha secret');
@@ -87,7 +87,7 @@ const Recaptcha = exports.Recaptcha = function(secret) {
 };
 
 // make a GET request to verify reCAPTCHA
-Recaptcha.prototype.verify = function(data, callback) {
+Recaptcha.prototype.verify = function (data, callback) {
   const baseUrl = 'https://www.google.com/recaptcha/api/siteverify';
   let query = {
     secret: this.secret,
